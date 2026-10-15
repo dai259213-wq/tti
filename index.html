@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Observatorio del Fenómeno del Niño</title>
+  <!-- Chart.js para las gráficas de la sección de Educación Ambiental -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #1a365d;
+      --secondary: #2b6cb0;
+      --accent: #dd6b20;
+      --bg-dark: #2d3748;
+      --bg-light: #d1d5db;
+      --text: #1a202c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Navbar Horizontal */
+    .top-nav {
+      background-color: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .top-nav h1 {
+      font-size: 1.5rem;
+    }
+
+    .top-nav ul {
+      display: flex;
+      list-style: none;
+      gap: 20px;
+    }
+
+    .top-nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s;
+      cursor: pointer;
+    }
+
+    .top-nav a:hover, .top-nav a.active {
+      color: var(--accent);
+    }
+
+    /* Control de Vistas */
+    .page-view {
+      display: none;
+      flex: 1;
+    }
+
+    .page-view.active-page {
+      display: flex;
+    }
+
+    /* Layout Principal */
+    .main-container {
+      display: flex;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Navbar Vertical */
+    .side-nav {
+      width: 250px;
+      background-color: #9ca3af;
+      padding: 2rem 1rem;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+
+    .side-nav h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: #1f2937;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .side-nav ul {
+      list-style: none;
+    }
+
+    .side-nav li {
+      margin-bottom: 0.5rem;
+    }
+
+    .side-nav a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .side-nav a:hover, .side-nav a.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    /* Contenido Principal */
+    .content {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1200px;
+    }
+
+    .section {
+      margin-bottom: 3rem;
+      scroll-margin-top: 80px;
+      background: #e5e7eb;
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid #9ca3af;
+    }
+
+    .hero {
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 4rem 2rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .hero h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Tarjetas y Rejillas */
+    .grid-sources {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      border: 1px solid #cbd5e1;
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .card-body {
+      padding: 1.2rem;
+    }
+
+    .tag {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ESTILOS DEL HEXÁGONO PROPORCIONAL Y REGULAR */
+    .hexagon-wrapper {
+      width: 100%;
+      max-width: 900px;
+      margin: 1.5rem auto;
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .hexagon-title {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #000;
+      margin-bottom: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .hexagon-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Estilos dentro del SVG */
+    .hex-q-title {
+      font-size: 24px;
+      font-weight: 800;
+      fill: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    .hex-box {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      color: #000;
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .hex-box.center-text {
+      text-align: center;
+      align-items: center;
+    }
+
+    .hex-box p {
+      margin-bottom: 6px;
+    }
+
+    .hex-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Datos Atmosféricos */
+    .chart-box {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #cbd5e1;
+    }
+
+    .stat-card h4 {
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
+
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--accent);
+      margin-top: 0.5rem;
+    }
+
+    footer {
+      background-color: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 1.5rem;
+      margin-top: auto;
+    }
+
+    @media (max-width: 768px) {
+      .top-nav {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .main-container {
+        flex-direction: column;
+      }
+
+      .side-nav {
+        width: 100%;
+        height: auto;
+        position: static;
+        padding: 1rem;
+      }
+
+      .side-nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .side-nav a {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .hex-box {
+        font-size: 10px;
+        line-height: 1.2;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Navegación Principal -->
+  <nav class="top-nav">
+    <h1>ClimaPacífico</h1>
+    <ul>
+      <li><a class="nav-tab active" onclick="switchTab('page-nino', this)">Fenómeno del Niño</a></li>
+      <li><a class="nav-tab" onclick="switchTab('page-lengua', this)">Lengua Castellana</a></li>
+      <li><a class="nav-tab" onclick="switchTab('page-ambiental', this)">Educación Ambiental</a></li>
+    </ul>
+  </nav>
+
+  <!-- ==================== PÁGINA 1: FENÓMENO DEL NIÑO ==================== -->
+  <div id="page-nino" class="page-view active-page">
+    <div class="main-container">
+      <aside class="side-nav">
+        <h2>Secciones de Información</h2>
+        <ul>
+          <li><a href="#que-es" class="nav-link">¿Qué es?</a></li>
+          <li><a href="#super-nino" class="nav-link">Súper Niño</a></li>
+          <li><a href="#noticias" class="nav-link">Noticias Recientes</a></li>
+          <li><a href="#documentales" class="nav-link">Documentales</a></li>
+          <li><a href="#informes" class="nav-link">Informes Científicos</a></li>
+          <li><a href="#historico" class="nav-link">Datos Históricos</a></li>
+        </ul>
+      </aside>
+
+      <main class="content">
+        <section class="hero" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80');">
+          <h2>Fenómeno del Niño & Súper Niño</h2>
+          <p>Comprendiendo los eventos climáticos que transforman los patrones meteorológicos a nivel global.</p>
+        </section>
+
+        <section class="section" id="que-es">
+          <h3>¿Qué es el Fenómeno del Niño?</h3>
+          <p style="margin-top: 1rem; line-height: 1.6;">
+            El Fenómeno de El Niño - Oscilación del Sur (ENOS) es un patrón climático recurrente que implica cambios en la temperatura de las aguas en la parte central y oriental del Pacífico ecuatorial.
+          </p>
+        </section>
+
+        <section class="section" id="super-nino">
+          <h3>El Fenómeno del "Súper Niño"</h3>
+          <p style="margin-top: 1rem; line-height: 1.6;">
+            Se denomina "Súper Niño" a un evento extraordinariamente intenso en el cual las temperaturas de la superficie del mar superan los 2.0 °C por encima del promedio histórico.
+          </p>
+        </section>
+
+        <section class="section" id="recursos">
+          <h3>Recopilación de Fuentes e Información</h3>
+
+          <div id="noticias" style="margin-top: 1.5rem; scroll-margin-top: 80px;">
+            <h4>Noticias Recientes</h4>
+            <div class="grid-sources">
+              <article class="card">
+                <img src="https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80" alt="Pacífico">
+                <div class="card-body">
+                  <span class="tag">Noticia</span>
+                  <h4>Alerta por Anomalías Térmicas en el Pacífico</h4>
+                  <p>Últimos reportes meteorológicos indican un calentamiento sostenido en las zonas 3.4 del Océano Pacífico.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div id="documentales" style="margin-top: 2rem; scroll-margin-top: 80px;">
+            <h4>Documentales Recomendados</h4>
+            <div class="grid-sources">
+              <article class="card">
+                <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80" alt="Espacio">
+                <div class="card-body">
+                  <span class="tag">Documental</span>
+                  <h4>Anatomía de un Súper Niño</h4>
+                  <p>Un recorrido audiovisual sobre los eventos extremos de 1997-1998 y 2015-2016 y sus consecuencias globales.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div id="informes" style="margin-top: 2rem; scroll-margin-top: 80px;">
+            <h4>Informes Científicos</h4>
+            <div class="grid-sources">
+              <article class="card">
+                <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=80" alt="Sequía">
+                <div class="card-body">
+                  <span class="tag">Informe Científico</span>
+                  <h4>Impacto Agroclimático Global</h4>
+                  <p>Estudio analítico de las alterations en las precipitaciones y cómo afecta a la producción agrícola regional.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div id="historico" style="margin-top: 2rem; scroll-margin-top: 80px;">
+            <h4>Registros Históricos</h4>
+            <p style="margin-top: 0.5rem; color: #4a5568;">
+              Registro detallado de los principales eventos climáticos documentados desde el siglo XX hasta la actualidad.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 2: LENGUA CASTELLANA ==================== -->
+  <div id="page-lengua" class="page-view">
+    <div class="main-container">
+      <aside class="side-nav">
+        <h2>Contenido Académico</h2>
+        <ul>
+          <li><a href="#introduccion" class="nav-link">Introducción</a></li>
+          <li><a href="#hexagrama" class="nav-link">Hexagrama Informativo</a></li>
+          <li><a href="#comprension" class="nav-link">Análisis Textual</a></li>
+        </ul>
+      </aside>
+
+      <main class="content">
+        <section class="hero" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80');">
+          <h2>Lengua Castellana & Comunicación</h2>
+          <p>Análisis de textos científicos, discursos divulgativos y representaciones gráficas del fenómeno climático.</p>
+        </section>
+
+        <section class="section" id="introduccion">
+          <h3>El Discurso Científico y Divulgativo</h3>
+          <p style="margin-top: 1rem; line-height: 1.6;">
+            El estudio del Fenómeno del Niño desde la perspectiva de la Lengua Castellana nos permite analizar cómo la ciencia comunica eventos complejos a la sociedad. A través de diagramas conceptuales, como el <strong>hexagrama</strong>, podemos descomponer un tema en sus seis preguntas clave.
+          </p>
+        </section>
+
+        <!-- HEXÁGRAMA REGULAR Y PROPORCIONAL -->
+        <section class="section" id="hexagrama">
+          <h3>Hexagrama: Fenómeno del Niño y Super Niño</h3>
+          <p style="margin-top: 0.5rem; line-height: 1.6; margin-bottom: 1rem;">
+            Infografía conceptual basada en las 6 preguntas explicativas del fenómeno:
+          </p>
+
+          <div class="hexagon-wrapper">
+            <h2 class="hexagon-title">FENÓMENO DEL NIÑO Y SUPER NIÑO</h2>
+
+            <svg viewBox="0 0 1000 950" class="hexagon-svg">
+              <!-- Hexágono Exterior Regular -->
+              <polygon points="500,60 881,280 881,720 500,940 119,720 119,280" fill="none" stroke="#000" stroke-width="10" />
+
+              <!-- Líneas Radiales Internas -->
+              <line x1="500" y1="350" x2="500" y2="60" stroke="#000" stroke-width="5" />
+              <line x1="630" y1="425" x2="881" y2="280" stroke="#000" stroke-width="5" />
+              <line x1="630" y1="575" x2="881" y2="720" stroke="#000" stroke-width="5" />
+              <line x1="500" y1="650" x2="500" y2="940" stroke="#000" stroke-width="5" />
+              <line x1="370" y1="575" x2="119" y2="720" stroke="#000" stroke-width="5" />
+              <line x1="370" y1="425" x2="119" y2="280" stroke="#000" stroke-width="5" />
+
+              <!-- Hexágono Central Regular -->
+              <polygon points="500,350 630,425 630,575 500,650 370,575 370,425" fill="#fff" stroke="#000" stroke-width="6" />
+
+              <!-- Títulos Principales en los Vértices Externos -->
+              <text x="500" y="42" text-anchor="middle" class="hex-q-title">¿QUÉ?</text>
+              <text x="900" y="270" text-anchor="start" class="hex-q-title">¿PARA QUÉ?</text>
+              <text x="900" y="740" text-anchor="start" class="hex-q-title">¿CÓMO?</text>
+              <text x="500" y="980" text-anchor="middle" class="hex-q-title">¿CON QUÉ?</text>
+              <text x="100" y="740" text-anchor="end" class="hex-q-title">¿CUÁNDO?</text>
+              <text x="100" y="270" text-anchor="end" class="hex-q-title">¿QUIÉN?</text>
+
+              <!-- Texto Centro -->
+              <foreignObject x="380" y="435" width="240" height="130">
+                <div class="hex-box center-text">
+                  <h3 style="font-size: 20px; font-weight: bold; line-height: 1.2;">El fenómeno del Niño y Super Niño</h3>
+                  <div style="font-size: 22px; margin-top: 4px;">≈≈</div>
+                </div>
+              </foreignObject>
+
+              <!-- Cintas / Triángulos de Contenido (foreignObject para ajuste automático del texto) -->
+              
+              <!-- 1. Superior: ¿QUÉ? -->
+              <foreignObject x="350" y="80" width="300" height="250">
+                <div class="hex-box center-text">
+                  <p><strong>a)</strong> Alteración de la temperatura del océano Pacífico ecuatorial, con un calentamiento anormal de sus aguas.[cite: 1]</p>
+                  <p><strong>b)</strong> Cambios en los patrones de viento y en la circulación oceánica.[cite: 1]</p>
+                  <p><strong>c)</strong> Fenómeno climático de escala global.[cite: 1]</p>
+                </div>
+              </foreignObject>
+
+              <!-- 2. Superior Derecha: ¿PARA QUÉ? -->
+              <foreignObject x="610" y="280" width="250" height="220">
+                <div class="hex-box">
+                  <p><strong>a)</strong> Alertar y prepararse ante sus impactos.[cite: 1]</p>
+                  <p><strong>b)</strong> Reducir riesgos en la agricultura, la pesca, la salud y la infraestructura.[cite: 1]</p>
+                  <p><strong>c)</strong> Proteger a las comunidades y ecosistemas vulnerables.[cite: 1]</p>
+                </div>
+              </foreignObject>
+
+              <!-- 3. Inferior Derecha: ¿CÓMO? -->
+              <foreignObject x="610" y="500" width="250" height="220">
+                <div class="hex-box">
+                  <p><strong>a)</strong> Aumento de la temperatura del mar en el Pacífico.[cite: 1]</p>
+                  <p><strong>b)</strong> Cambios en la dirección de los vientos alisios.[cite: 1]</p>
+                  <p><strong>c)</strong> Alteraciones en las lluvias y en los patrones climáticos de todo el planeta (sequías, inundaciones y eventos extremos).[cite: 1]</p>
+                </div>
+              </foreignObject>
+
+              <!-- 4. Inferior: ¿CON QUÉ? -->
+              <foreignObject x="350" y="670" width="300" height="240">
+                <div class="hex-box center-text">
+                  <p><strong>a)</strong> Observaciones satelitales y boyas oceánicas.[cite: 1]</p>
+                  <p><strong>b)</strong> Modelos climáticos y pronósticos meteorológicos.[cite: 1]</p>
+                  <p><strong>c)</strong> Indicadores como la temperatura del mar, los vientos y la presión atmosférica.[cite: 1]</p>
+                </div>
+              </foreignObject>
+
+              <!-- 5. Inferior Izquierda: ¿CUÁNDO? -->
+              <foreignObject x="140" y="500" width="250" height="220">
+                <div class="hex-box">
+                  <p>El fenómeno del Niño ocurre cada cierto tiempo, con un promedio de 2 a 7 años, y el Super Niño es una versión más intensa y prolongada, con mayores impactos en el clima.[cite: 1]</p>
+                </div>
+              </foreignObject>
+
+              <!-- 6. Superior Izquierda: ¿QUIÉN? -->
+              <foreignObject x="140" y="280" width="250" height="220">
+                <div class="hex-box">
+                  <p>El fenómeno del Niño y el Super Niño son parte del sistema climático global y afectan a todos los países del mundo, pero impactan con mayor fuerza a las zonas costeras del Pacífico, especialmente a países de América Latina.[cite: 1]</p>
+                </div>
+              </foreignObject>
+            </svg>
+          </div>
+        </section>
+
+        <section class="section" id="comprension">
+          <h3>Análisis y Comprensión Lectora</h3>
+          <p style="margin-top: 1rem; line-height: 1.6;">
+            Para interpretar adecuadamente las noticias o informes sobre el "Súper Niño", es fundamental distinguir entre la <strong>información objetiva</strong> (datos métricos) y los <strong>recursos argumentativos</strong> utilizados para generar alerta preventiva.
+          </p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ==================== PÁGINA 3: EDUCACIÓN AMBIENTAL ==================== -->
+  <div id="page-ambiental" class="page-view">
+    <div class="main-container">
+      <aside class="side-nav">
+        <h2>Secciones Ambientales</h2>
+        <ul>
+          <li><a href="#ecosistemas" class="nav-link">Impacto Ecosistémico</a></li>
+          <li><a href="#graficas" class="nav-link">Datos Atmosféricos</a></li>
+          <li><a href="#mitigacion" class="nav-link">Plan de Mitigación</a></li>
+        </ul>
+      </aside>
+
+      <main class="content">
+        <section class="hero" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80');">
+          <h2>Educación & Conciencia Ambiental</h2>
+          <p>Análisis de variables atmosféricas y estrategias de conservación frente al impacto del Fenómeno del Niño.</p>
+        </section>
+
+        <section class="section" id="ecosistemas">
+          <h3>Impacto en los Ecosistemas</h3>
+          <p style="margin-top: 1rem; line-height: 1.6;">
+            El aumento anormal de la temperatura en el Pacífico desencadena un efecto dominó: blanqueamiento de arrecifes de coral, migración imprevista de especies marinas y alteración de los ciclos hídricos continentales.
+          </p>
+        </section>
+
+        <section class="section" id="graficas">
+          <h3>Monitoreo de Datos Atmosféricos y Oceánicos</h3>
+          <p style="margin-top: 0.5rem; line-height: 1.6;">
+            Las variables atmosféricas clave permiten medir la severidad del evento ENOS.
+          </p>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h4>Anomalía Térmica Pacífico</h4>
+              <div class="value">+2.3 °C</div>
+            </div>
+            <div class="stat-card">
+              <h4>Presión Atmosférica</h4>
+              <div class="value">1008 hPa</div>
+            </div>
+            <div class="stat-card">
+              <h4>Índice de Precipitación</h4>
+              <div class="value">-45%</div>
+            </div>
+            <div class="stat-card">
+              <h4>Debilitamiento Vientos</h4>
+              <div class="value">3.2 m/s</div>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <h4>Anomalía Promedio de la Temperatura Superficial del Mar (°C)</h4>
+            <canvas id="tempChart" width="400" height="200"></canvas>
+          </div>
+        </section>
+
+        <section class="section" id="mitigacion">
+          <h3>Estrategias de Mitigación y Gestión del Riesgo</h3>
+          <p style="margin-top: 1rem; line-height: 1.6;">
+            Frente a la amenaza de eventos severos o "Súper Niño", las comunidades deben desarrollar planes adaptativos:
+          </p>
+          <ul style="margin-top: 1rem; margin-left: 1.5rem; line-height: 1.8;">
+            <li>Uso eficiente y racionamiento estratégico del recurso hídrico.</li>
+            <li>Protección y reforestación de cuencas hidrográficas.</li>
+            <li>Implementación de sistemas comunitarios de alerta temprana.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; Observatorio del Fenómeno del Niño - Portal Informativo</p>
+  </footer>
+
+  <!-- SCRIPT UNIFICADO DE NAVEGACIÓN Y GRÁFICAS -->
+  <script>
+    let chartInstance = null;
+
+    function switchTab(pageId, element) {
+      document.querySelectorAll('.page-view').forEach(page => {
+        page.classList.remove('active-page');
+      });
+
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      document.getElementById(pageId).classList.add('active-page');
+      element.classList.add('active');
+
+      if (pageId === 'page-ambiental' && !chartInstance) {
+        initChart();
+      }
+
+      setupIntersectionObserver();
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('tempChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+          datasets: [
+            {
+              label: 'Niño Normal (°C sobre promedio)',
+              data: [0.5, 0.7, 0.8, 1.0, 1.2, 1.1, 1.3, 1.4, 1.2, 1.0, 0.9, 0.7],
+              borderColor: '#2b6cb0',
+              backgroundColor: 'rgba(43, 108, 176, 0.1)',
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: 'Súper Niño (°C sobre promedio)',
+              data: [0.8, 1.2, 1.6, 2.0, 2.3, 2.5, 2.6, 2.4, 2.3, 2.1, 2.0, 1.8],
+              borderColor: '#dd6b20',
+              backgroundColor: 'rgba(221, 107, 32, 0.1)',
+              fill: true,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: {
+            y: {
+              title: { display: true, text: 'Anomalía (°C)' },
+              suggestedMin: 0,
+              suggestedMax: 3
+            }
+          }
+        }
+      });
+    }
+
+    function setupIntersectionObserver() {
+      const activePage = document.querySelector('.page-view.active-page');
+      if (!activePage) return;
+
+      const targets = activePage.querySelectorAll('section[id], div[id]');
+      const navLinks = activePage.querySelectorAll('.side-nav .nav-link');
+
+      const observerOptions = {
+        root: null,
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const currentId = entry.target.getAttribute('id');
+            navLinks.forEach(link => {
+              const href = link.getAttribute('href').replace('#', '');
+              if (href === currentId) {
+                link.classList.add('active');
+              } else {
+                link.classList.remove('active');
+              }
+            });
+          }
+        });
+      }, observerOptions);
+
+      targets.forEach(target => observer.observe(target));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupIntersectionObserver();
+    });
+  </script>
+</body>
+</html>
